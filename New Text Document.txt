@@ -1,0 +1,95 @@
+
+#include <ESP8266WiFi.h>
+
+
+
+const char* ssid = "Dialog 4G 694";
+const char* password = "9ADe3De1";
+
+char server[] = "ceb-selfcare.000webhostapp.com";
+
+WiFiClient client;
+
+#define RELAIS 2
+
+unsigned long previousMillis = 0;
+const long interval = 30000;
+
+unsigned long currentMillis = 0;
+
+void setup() {
+  // put your setup code here, to run once:
+  Serial.begin(115200);
+  delay(10);
+
+  Serial.println();
+  Serial.println();
+  Serial.print("Connecting with ");
+  Serial.println(ssid);
+
+  WiFi.begin(ssid, password);
+
+  while (WiFi.status() != WL_CONNECTED) {
+    delay(500);
+    Serial.print(".");
+  }
+  Serial.println();
+  Serial.println("Connected with network");
+
+  Serial.print("IP: ");
+  Serial.print("http://");
+  Serial.print(WiFi.localIP());
+  Serial.println("/");
+  Serial.println();
+}
+
+void loop() {
+  delay(5000);
+
+  Serial.print("connecting to host");
+  Serial.println( server );
+
+  // Use WiFiClient class to create TCP connections
+  WiFiClient client;
+  const int httpPort = 80;
+  if (!client.connect( server, httpPort)) {
+    Serial.println("connection failed");
+    return;
+  }
+
+  // We now create a URI for the request
+
+
+  Serial.print("Requesting URL: ");
+
+
+  // This will send the request to the server
+
+  //HTTP request
+  client.print("GET /con/dbread.php?"); //I make a connection with the server and use the read_data php file where the variables i need are located. So now what?
+  client.println(" HTTP/1.1");
+  client.print("Host: " ) ;
+  client.println( server ) ;
+  client.println("Connection: close");
+  client.println();
+  client.println();
+
+
+  unsigned long timeout = millis();
+  while (client.available() == 0) {
+    if (millis() - timeout > 5000) {
+      Serial.println(">>> Client Timeout !");
+      client.stop();
+      return;
+    }
+  }
+
+  // Read all the lines of the reply from server and print them to Serial
+  while (client.available()) {
+    String line = client.readStringUntil('\r');
+    Serial.print(line);
+  }
+
+  Serial.println();
+  Serial.println("closing connection");
+}
